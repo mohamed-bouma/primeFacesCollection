@@ -23,25 +23,7 @@ public class CaracteristiqueDAO extends DAO<Caracteristique,Caracteristique> {
 
     @Override
     public ArrayList<Caracteristique> getAll() {
-        ArrayList<Caracteristique> list = new ArrayList<>();
-        try (Statement stmt = connexion.createStatement()) {
-            String strCmd = "SELECT distinct * from caracteristique";
-            ResultSet rs = stmt.executeQuery(strCmd);
-            // Couleur couleurLu = new Couleur();
-            Caracteristique caracteristiqueLu;
-            while (rs.next())
-            {
-                caracteristiqueLu = new Caracteristique(rs.getInt(1), rs.getString(2),rs.getBoolean(3),rs.getBoolean(4),rs.getBoolean(5));
-                list.add(caracteristiqueLu);
-            }
-            rs.close();
-        }
-
-        catch (Exception e)
-        {
-            System.out.println(e.getMessage());
-        }
-        return list;
+     return null;
     }
 
 
@@ -52,27 +34,7 @@ public class CaracteristiqueDAO extends DAO<Caracteristique,Caracteristique> {
 
     @Override
     public boolean insert(Caracteristique objet) {
-
-
-        ResultSet rs;
-
-        String procedureStockee = "{call dbo.insert_caracteristique (?)}";
-
-
-        try (CallableStatement cStmt = this.connexion.prepareCall(procedureStockee)) {
-
-            cStmt.setString(1, objet.getLibelle_caracteristique().toString());
-
-            cStmt.execute();
-            rs = cStmt.getResultSet();
-
-            rs.close();
-            return true;
-        }
-        catch (Exception e) {
-            e.printStackTrace();
             return false;
-        }
     }
 
     @Override
@@ -82,28 +44,7 @@ public class CaracteristiqueDAO extends DAO<Caracteristique,Caracteristique> {
 
     @Override
     public boolean delete(Caracteristique object) {
-
-
-        ResultSet rs;
-
-        String procedureStockee = "{call dbo.delete_caracteristique (?)}";
-
-
-        try (CallableStatement cStmt = this.connexion.prepareCall(procedureStockee)) {
-
-            cStmt.setString(1, object.getLibelle_caracteristique().toString());
-
-            cStmt.execute();
-            rs = cStmt.getResultSet();
-
-            //while (rs.next()) {   newLigne.setIdObjet(rs.getInt(1));}
-            rs.close();
-            return true;
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
+        return false;
     }
 
     public static List<Caracteristique> getListCaracteristique(){

@@ -1,12 +1,11 @@
 package fr.collection.primefacescollection.dao;
 
-import fr.collection.primefacescollection.metier.LigneProduit;
-import fr.collection.primefacescollection.metier.Produit;
-import fr.collection.primefacescollection.outils.OutilsInteger;
+import fr.collection.primefacescollection.metier.*;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class ProduitDAO extends DAO<Produit, Produit> {
 
@@ -18,97 +17,158 @@ public class ProduitDAO extends DAO<Produit, Produit> {
 
     @Override
     public Produit getByID(int id) {
-        //return null;
-        List<LigneProduit> lignesProduits = new ArrayList<>();
-        lignesProduits = LigneProduitDAO.getLignesProduits();
-
-        Produit produit = new Produit();
-
-        int idActuel = 0;
-        Produit produitActuel = new Produit();
-        boolean first = false;
-
-        for (LigneProduit ligne : lignesProduits) {
-            if(!first){
-                produit.setId(ligne.getIdObjet());
-                produit = TypeDAO.getObjecType(ligne.getIdObjet());
-                idActuel= ligne.getIdObjet();
-                first = true;
-            }
-
-            produit.addCaracteristiques(ligne.getLibelleCaracteristique());
-            if(ligne.getLibelleReferenciel()!=null){
-                produit.addCaracteristiques(ligne.getLibelleReferenciel());
-            }
-            else if(ligne.getTexte()!=null){
-                produit.addCaracteristiques(ligne.getTexte());
-            }
-            else if(ligne.getValeur()!=0){
-                produit.addCaracteristiques(ligne.getValeur());
-            }
-            else{
-                produit.addCaracteristiques("null");
-            }
-
-        }
-
-        return produit;
-
+        return null;
     }
 
     @Override
-    public ArrayList<Produit> getAll(){
-
-        ArrayList<LigneProduit> lignesProduits = new ArrayList<>();
-        lignesProduits = LigneProduitDAO.getLignesProduits();
-
+    public ArrayList<Produit> getAll() {
+        ResultSet rs;
         ArrayList<Produit> listeProduits = new ArrayList<>();
 
-        int idActuel = 0;
-        Produit produitActuel = new Produit();
-        int i = -1;
+        try (PreparedStatement cStmt = connexion.prepareStatement("select Objet.id_objet, description,\n" +
+                "type.id_type, libelle_type, caracteristique.id_caracteristique, libelle_caracteristique,\n" +
+                "caracteristique_objet.valeur, caracteristique_objet.texte,\n" +
+                "referenciel.id_referenciel, libelle_referenciel from caracteristique_objet\n" +
+                "left join Objet on Objet.id_objet = caracteristique_objet.id_objet\n" +
+                "left join type on type.id_type = Objet.id_type\n" +
+                "left join caracteristique on caracteristique_objet.id_caracteristique = caracteristique.id_caracteristique\n" +
+                "left join referenciel on caracteristique_objet.id_referenciel = referenciel.id_referenciel\n" +
+                "order by id_objet")) {
 
-        for (LigneProduit ligne : lignesProduits) {
+            cStmt.execute();
+            rs = cStmt.getResultSet();
+            int lastId = -1;
+            List<Caracteristique> listeCaracteristiques = new ArrayList<Caracteristique>();
+            List<Referenciel> listeReferentiel = new ArrayList<Referenciel>();
+            Boolean CaracteristiqueExiste = false;
+            Boolean ReferentielExiste = false;
+            int indexCaracteristique = -1;
+            int indexReferentiel = -1;
+            Double valeurNum;
+            String valeurTexte;
+            while (rs.next()) {
 
-            if (idActuel != ligne.getIdObjet()) {
-                produitActuel = new Produit();
-                produitActuel.setId(ligne.getIdObjet());
-                listeProduits.add(produitActuel);
-                try {
-                    PreparedStatement stmt = connexion.prepareStatement("select description, libelle_type from objet join type on type.id_type = objet.id_type where objet.id_objet = ?");
-                    stmt.setInt(1, ligne.getIdObjet());
-                    ResultSet rs = stmt.executeQuery();
-                    while(rs.next()) {
-                        produitActuel.setDescription(rs.getString(1));
-                        produitActuel.setType(rs.getString(2));
-                    }
-                } catch (Exception e) {
-                    System.out.print("Fail");
-                    e.printStackTrace();
-                    System.out.println(e);
+                valeurNum = 0.0;
+                valeurTexte = null;
+
+                if (lastId == -1 || lastId != rs.getInt(1)) {
+                    lastId = rs.getInt(1);
+                    Produit newProduit = new Produit();
+                    newProduit.setId_produit(rs.getInt(1));
+                    newProduit.setDescription(rs.getString(2));
+                    newProduit.setType(new Type());
+                    newProduit.getType().setId(rs.getInt(3));
+                    newProduit.getType().setLibelle_type(rs.getString(4));
+                    newProduit.setListproduitCaracteristiques(new ArrayList<ProduitCaracteristique>());
+                    listeProduits.add(newProduit);
                 }
-                i++;
-                idActuel = ligne.getIdObjet();
-                listeProduits.get(i).setDescription(produitActuel.getDescription());
-                listeProduits.get(i).setType(produitActuel.getType());
-            }
 
-            listeProduits.get(i).addCaracteristiques(ligne.getLibelleCaracteristique());
-            if (ligne.getLibelleReferenciel() != null) {
-                listeProduits.get(i).addCaracteristiques(ligne.getLibelleReferenciel());
-            } else if (ligne.getTexte() != null) {
-                listeProduits.get(i).addCaracteristiques(ligne.getTexte());
-            } else if (ligne.getValeur() != 0) {
-                listeProduits.get(i).addCaracteristiques(ligne.getValeur());
-            } else {
-                listeProduits.get(i).addCaracteristiques("null");
-            }
+                if (rs.getObject(9) != null) { //Il y a un referenciel
+                    ReferentielExiste = false;
+                    for (int j = 0; j < listeReferentiel.size(); j++) {
+                        if (listeReferentiel.get(j).getId_referenciel() == rs.getInt(9)) {
+                            ReferentielExiste = true;
+                            indexReferentiel = j;
+                        }
+                    }
 
+                    if (!ReferentielExiste) {
+                        Referenciel newReferentiel = new Referenciel();
+                        newReferentiel.setId_referenciel(rs.getInt(9));
+                        newReferentiel.setLibelle_referenciel(rs.getString(10));
+
+                        listeReferentiel.add(newReferentiel);
+                        indexReferentiel = listeReferentiel.size() - 1;
+                    }
+                } else {
+                    indexReferentiel = -1;
+                }
+
+                CaracteristiqueExiste = false;
+                for (int j = 0; j < listeCaracteristiques.size(); j++) {
+                    if (listeCaracteristiques.get(j).getId_caracteristique() == rs.getInt(5)) {
+                        CaracteristiqueExiste = true;
+                        indexCaracteristique = j;
+                    }
+                }
+
+                if (!CaracteristiqueExiste) {
+                    Caracteristique newCaracteristique = new Caracteristique();
+                    newCaracteristique.setId_caracteristique(rs.getInt(5));
+                    newCaracteristique.setLibelle_caracteristique(rs.getString(6));
+                    if (indexReferentiel != -1) { //il y a un referenciel
+                        newCaracteristique.setNum(false);
+                        newCaracteristique.setTexte(false);
+                        newCaracteristique.setListe(true);
+                    } else if (rs.getObject(7) != null) { //c'est un num
+                        newCaracteristique.setNum(true);
+                        newCaracteristique.setTexte(false);
+                        newCaracteristique.setListe(false);
+                        valeurNum = rs.getDouble(7);
+                    } else { //c'est un simple texte
+                        newCaracteristique.setNum(false);
+                        newCaracteristique.setTexte(true);
+                        newCaracteristique.setListe(false);
+                        valeurTexte = rs.getString(8);
+                    }
+                    listeCaracteristiques.add(newCaracteristique);
+                    indexCaracteristique = listeCaracteristiques.size() - 1;
+                }
+
+
+                ProduitCaracteristique newProduitCaracteristique = new ProduitCaracteristique();
+                newProduitCaracteristique.setId_produit(rs.getInt(1));
+                newProduitCaracteristique.setCaracteristique(listeCaracteristiques.get(indexCaracteristique));
+                if (indexReferentiel != -1) {
+                    newProduitCaracteristique.setReferentiel(listeReferentiel.get(indexReferentiel));
+                }
+                newProduitCaracteristique.setValeur(valeurNum);
+                newProduitCaracteristique.setTexte(valeurTexte);
+
+
+                listeProduits.get(lastId - 1).getListproduitCaracteristiques().add(newProduitCaracteristique);
+
+
+            }
+            rs.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        System.out.println(listeProduits);
+        System.out.println(listeProduits.get(1).getListproduitCaracteristiques());
+        return listeProduits;
+
+
+    }
+
+    public ArrayList<Produit> getTableProduit(){
+        ArrayList<Produit> liste = new ArrayList<>();
+        try (Statement stmt = connexion.createStatement()){
+
+            // Determine the column set column
+
+            String strCmd = "select  O.id_objet, O.description,T.id_type,T.libelle_type,caracteristique_objet.valeur from Objet as O\n" +
+                    "                    left join type as T on O.id_type = T.id_type \n" +
+                    "                    left join caracteristique_objet on O.id_objet = caracteristique_objet.id_objet\n" +
+                    "                    left join caracteristique on caracteristique_objet.id_caracteristique = caracteristique.id_caracteristique\n" +
+                    "                    where caracteristique.id_caracteristique = 1";
+            ResultSet rs = stmt.executeQuery(strCmd);
+            while (rs.next()) {
+               Produit produit = new Produit(rs.getInt(1), rs.getString(2));
+               produit.setType(new Type(rs.getInt(3),rs.getString(4)));
+               produit.setListproduitCaracteristiques(new ArrayList<>());
+               produit.getListproduitCaracteristiques().add(new ProduitCaracteristique(rs.getDouble(5)));
+                liste.add(produit);
+            }
+            rs.close();
         }
 
-
-
-        return listeProduits;
+        // Handle any errors that may have occurred.
+        catch (Exception e) {
+            e.printStackTrace();
+            System.out.println(e.getMessage());
+        }
+        return liste;
     }
 
     @Override
@@ -117,167 +177,18 @@ public class ProduitDAO extends DAO<Produit, Produit> {
     }
 
     @Override
-    public boolean insert(Produit objet) throws SQLException {
-        //return false;
-        ResultSet rs;
-        String procedureStockee = "{call check_type_exists (?)}";
-        int idType = 0;
-        int idObj = 0;
-        int i =0;
-        int j=0;
-        Produit schema = new Produit();
+    public boolean insert(Produit objet) { return false; }
 
-        idType = TypeDAO.getIdType(objet, procedureStockee, idType);
-
-        if (idType !=0) {
-            TypeDAO.remplirSchema(idType, schema);
-
-            idObj = insererObject(objet.getDescription(), idType);
-
-            try{
-                connexion.setAutoCommit(false);
-
-                for (Object caracteristiqueSchema : schema.getCaracteristiques()) {
-
-                    procedureStockee = "{call dbo.insert_caracteristique_objet (?, ?, ?, ?)}";
-                    try (CallableStatement cStmt = connexion.prepareCall(procedureStockee)) {
-                        cStmt.setInt(1, idObj);
-                        cStmt.setObject(2, objet.getCaracteristiques().get(i++));
-                        System.out.println("lecture index : "+i);
-                        System.out.println("valeur : "+objet.getCaracteristiques().get(i));
-                        if(objet.getCaracteristiques().get(i) == null){
-                            System.out.println("inserting "+objet.getCaracteristiques().get(i)+" as null");
-                            cStmt.setString(3, null);
-                            cStmt.setString(4, null);
-                            i++;
-                        }
-                        else if(!OutilsInteger.isNotInteger(objet.getCaracteristiques().get(i).toString()) && objet.getCaracteristiques().get(i-1).toString()!= "annee"){
-                            System.out.println("inserting "+objet.getCaracteristiques().get(i)+" as numeric");
-                            cStmt.setInt(3, Integer.parseInt(objet.getCaracteristiques().get(i++).toString()));
-                            cStmt.setString(4, null);
-                        }
-                        else{
-                            System.out.println("inserting "+objet.getCaracteristiques().get(i)+" as varchar");
-                            cStmt.setString(3, null);
-                            cStmt.setObject(4, objet.getCaracteristiques().get(i++));
-                        }
-
-                        cStmt.execute();
-
-                    }
-                    catch (Exception e) {
-                        e.printStackTrace();
-
-                    }
-                }
-                connexion.commit();
-            } //end try transaction
-            catch (Exception e) {
-                connexion.rollback();
-            }
-
-            return true;
-        }
+    @Override
+    public boolean update(Produit object) {
         return false;
     }
 
     @Override
-    public boolean update(Produit object) {
-        // return false;
-        int idObject = object.getId();
-        Produit ancienProduit = getByID(idObject);
-        int i = 0;
-        LigneProduit oldLigne;
-        LigneProduit newLigne;
-
-        if (ancienProduit.getDescription() != object.getDescription()) {
-            modifierDescription(object);
-        }
-
-        for (i = 0; i < object.getCaracteristiques().size(); i = i + 2) {
-            newLigne = new LigneProduit();
-            oldLigne = new LigneProduit();
-            newLigne.setIdObjet(idObject);
-            newLigne.setLibelleCaracteristique(object.getCaracteristiques().get(i).toString());
-            oldLigne.setIdObjet(idObject);
-            oldLigne.setLibelleCaracteristique(ancienProduit.getCaracteristiques().get(i).toString());
-
-
-            if (newLigne == null) {
-
-            } else if (!OutilsInteger.isNotInteger(object.getCaracteristiques().get(i).toString())) {
-                System.out.println("Modification : entree de " + object.getCaracteristiques().get(i + 1).toString() + " index " + i + " en double");
-                newLigne.setValeur(Double.parseDouble(object.getCaracteristiques().get(i + 1).toString()));
-            } else {
-                System.out.println("Modification : entree de " + object.getCaracteristiques().get(i + 1).toString() + " index " + i + " en varchar");
-                newLigne.setTexte(object.getCaracteristiques().get(i + 1).toString());
-            }
-
-            if (newLigne != oldLigne) {
-                LigneProduitDAO.modifierLigne(newLigne);
-            }
-        }
-        return true;
-    }
-
-    @Override
     public boolean delete(Produit object) {
-        //return false;
-        ResultSet rs;
-
-        try (PreparedStatement cStmt = connexion.prepareStatement("delete from dbo.caracteristique_objet where id_objet = ?")) {
-            cStmt.setInt(1, object.getId());
-            cStmt.execute();
-            return true;
-        }  catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
+        return false;
     }
-
-
-
-    private static void modifierDescription(Produit newProduit) {
-
-        String procedureStockee;
-        ResultSet rs;
-
-        procedureStockee = "{call modify_ligne (?, ?)}";
-
-        try (CallableStatement cStmt = connexion.prepareCall(procedureStockee)) {
-            cStmt.setInt(1, newProduit.getId());
-            cStmt.setString(2, newProduit.getDescription());
-
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-
-    private static int insererObject(String description, int idType) {
-        String procedureStockee;
-        ResultSet rs;
-        int idObj = 0;
-
-        procedureStockee = "{call dbo.insert_object (?, ?)}";
-
-        try (CallableStatement cStmt = connexion.prepareCall(procedureStockee)) {
-
-            cStmt.setString(1, description);
-            cStmt.setInt(2, idType);
-
-            cStmt.execute();
-            rs = cStmt.getResultSet();
-
-            while (rs.next()) {
-                idObj = rs.getInt(1);
-            }
-            rs.close();
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-        }
-        return idObj;
-    } //pas toucher besoin pour insert
 }
+
+
+

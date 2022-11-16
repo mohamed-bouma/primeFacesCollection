@@ -5,7 +5,8 @@ public class DAOfactory {
 
     private static final Connection connexion = CollectionConnect.getInstance();
 
-    public static ProduitDAO getObjetDAO(){return new ProduitDAO(connexion);}
+    public static ProduitDAO getProduitDAO(){return new ProduitDAO(connexion);}
+
 
     public static TypeDAO getTypeDAO(){return new TypeDAO(connexion);}
 

@@ -1,21 +1,38 @@
 package fr.collection.primefacescollection.metier;
 
+
 import java.util.ArrayList;
-import java.util.List;
 
 public class Produit {
-    private String type;
-    private Integer id;
+
+    private Integer id_produit;
+
     private String description;
-    private List<Object> caracteristiques = new ArrayList();
 
+    private Type type;
 
+    private ArrayList<ProduitCaracteristique> listproduitCaracteristiques;
 
-    public int getId() {
-        return id;
+    public Produit() {
     }
-    public void setId(int id) {
-        this.id = id;
+
+    public Produit(Integer id_produit, String description, Type type, ArrayList<ProduitCaracteristique> listproduitCaracteristiques) {
+        this.id_produit = id_produit;
+        this.description = description;
+        this.type = type;
+        this.listproduitCaracteristiques = listproduitCaracteristiques;
+    }
+
+    public Produit(Integer id_produit, String description) {
+        this.id_produit = id_produit;
+        this.description = description;
+    }
+
+    public Integer getId_produit() {
+        return id_produit;
+    }
+    public void setId_produit(Integer id_produit) {
+        this.id_produit = id_produit;
     }
 
 
@@ -27,19 +44,29 @@ public class Produit {
     }
 
 
-    public String getType() {
+    public Type getType() {
         return type;
     }
-    public void setType(String type) {
+    public void setType(Type type) {
         this.type = type;
     }
 
-    public List<Object> getCaracteristiques() {
-        return caracteristiques;
+
+    public ArrayList<ProduitCaracteristique> getListproduitCaracteristiques() {
+        return listproduitCaracteristiques;
     }
-    public void addCaracteristiques(Object obj) {
-        this.caracteristiques.add(obj);
+    public void setListproduitCaracteristiques(ArrayList<ProduitCaracteristique> listproduitCaracteristiques) {
+        this.listproduitCaracteristiques = listproduitCaracteristiques;
     }
 
+
+    @Override
+    public String toString() {
+        return "Produit{" +
+                "id_produit=" + id_produit +
+                ", description='" + description + '\'' +
+                ", type=" + type +
+                ", listproduitCaracteristiques=" + listproduitCaracteristiques +
+                "}\n";
+    }
 }
-

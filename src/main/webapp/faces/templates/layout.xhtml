@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui">
+<f:view>
+
+    <h:form>
+        <p:selectOneMenu id="comboType" value="#{produitBean.typeSelected}">
+            <f:selectItems value="#{produitBean.allTypes}"/>
+            <f:converter converterId="typeConverter"/>
+        </p:selectOneMenu>
+
+        <p:commandButton value="Soumettre" action="#{produitBean.filtrer}" update="articles"/>
+
+        <div class="card">
+            <p:dataTable id="articles" widgetVar="allarticles" var="produit" value="#{produitBean.produitsFiltred}" rows="10"
+                     paginator="true" paginatorPosition="both"
+                     paginatorTemplate="{CurrentPageReport} {FirstPageLink} {PreviousPageLink} {PageLinks} {NextPageLink} {LastPageLink} {RowsPerPageDropdown}"
+                     currentPageReportTemplate="{startRecord}-{endRecord} of {totalRecords} records"
+                     rowsPerPageTemplate="5,10,{ShowAll|'All'}"
+                     emptyMessage="No customers found with given criteria"
+                     filteredValue="#{produitBean.produitsFiltred}">
+
+
+                <f:facet name="header">
+                    <div class="products-table-header">
+                        <span style="font-weight: bold">PRODUCTS</span>
+                            <span class="filter-container ui-input-icon-left"> <i class="pi pi-search"></i>
+                            <p:inputText id="globalFilter" onkeyup="PF('allarticles').filter()" placeholder="Search" />
+                            </span>
+                    </div>
+                </f:facet>
+
+
+                <p:column headerText="ID">
+                    <h:outputText value="#{produit.id_produit}" />
+                </p:column>
+
+                <p:column headerText="Description">
+                    <h:outputText value="#{produit.description}" />
+                </p:column>
+
+                <p:column headerText="Type">
+                    <h:outputText value="#{produit.type.libelle}" />
+                </p:column>
+
+                <p:column headerText="Prix">
+                    <h:outputText value="#{produit.listproduitCaracteristiques.get(0).valeur}" />
+                </p:column>
+            </p:dataTable>
+        </div>
+    </h:form>
+</f:view>
+</html>

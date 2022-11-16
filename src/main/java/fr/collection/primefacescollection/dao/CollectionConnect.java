@@ -1,5 +1,7 @@
 package fr.collection.primefacescollection.dao;
 
+import com.microsoft.sqlserver.jdbc.SQLServerDataSource;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 
@@ -15,11 +17,17 @@ public class CollectionConnect {
         if (connexion == null) {
             System.out.println("Tentative de connexion bdd");
             try {
-                String dbURL = "jdbc:sqlserver://localhost:1401;databaseName=COLLECTION;encrypt=false";
-                String user = "sa";
-                String pass = "azerty@123456";
-                connexion = DriverManager.getConnection(dbURL, user, pass);
-                System.out.println("Connexion reussie");
+                SQLServerDataSource ds = new SQLServerDataSource();
+                ds.setServerName("127.0.0.1");
+//                ds.setServerName("sdbm");
+                ds.setPortNumber(1402);
+                ds.setDatabaseName("COLLECTION");
+                ds.setIntegratedSecurity(false);
+                ds.setEncrypt(false);
+                ds.setUser("sa");
+                ds.setPassword("azerty@123456");
+                connexion = ds.getConnection();
+
             }
 
             // Handle any errors that may have occurred.
