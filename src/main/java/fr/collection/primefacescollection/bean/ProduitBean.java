@@ -33,7 +33,7 @@ public class ProduitBean implements Serializable {
 
     @PostConstruct
     public void init(){
-        produitsFiltred = DAOfactory.getProduitDAO().getTableProduit();
+        produitsFiltred = DAOfactory.getProduitDAO().getLike(articleSearch);
 
         allTypes = DAOfactory.getTypeDAO().getAll();
         allTypes.add(0,new Type(0,"Choisir Type"));

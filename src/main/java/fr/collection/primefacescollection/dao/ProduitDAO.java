@@ -1,13 +1,14 @@
 package fr.collection.primefacescollection.dao;
 
 import fr.collection.primefacescollection.metier.*;
+import fr.collection.primefacescollection.service.ProduitSearch;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class ProduitDAO extends DAO<Produit, Produit> {
+public class ProduitDAO extends DAO<Produit, ProduitSearch> {
 
     private static final Connection connexion = CollectionConnect.getInstance();
 
@@ -172,8 +173,72 @@ public class ProduitDAO extends DAO<Produit, Produit> {
     }
 
     @Override
-    public ArrayList<Produit> getLike(Produit objetSearch) {
-        return null;
+    public ArrayList<Produit> getLike(ProduitSearch produitSearch) {
+        ResultSet rs;
+        String request;
+        ArrayList<Produit> listeProduits = new ArrayList<Produit>();
+
+
+        request = "select distinct Objet.id_objet, description, libelle_type, libelle_caracteristique, caracteristique_objet.valeur\n" +
+                "from caracteristique_objet\n" +
+                "left join Objet on Objet.id_objet = caracteristique_objet.id_objet\n" +
+                "left join type on type.id_type = Objet.id_type\n" +
+                "left join caracteristique on caracteristique_objet.id_caracteristique = caracteristique.id_caracteristique\n" +
+                "left join referenciel on referenciel.id_referenciel = caracteristique_objet.id_referenciel\n" +
+                "where type.libelle_type like '" + produitSearch.getType().getLibelle() + "'\n" +
+                "and caracteristique.id_caracteristique=1\n";
+        int i;
+        for (i = 0; i < produitSearch.getListproduitCaracteristiques().size(); i++) {
+            ProduitCaracteristique pc = produitSearch.getListproduitCaracteristiques().get(i);
+            request += "and Objet.id_objet in(\n" +
+                    "select distinct Objet.id_objet\n" +
+                    "from caracteristique_objet\n" +
+                    "left join Objet on Objet.id_objet = caracteristique_objet.id_objet\n" +
+                    "left join type on type.id_type = Objet.id_type\n" +
+                    "left join caracteristique on caracteristique_objet.id_caracteristique = caracteristique.id_caracteristique\n" +
+                    "left join referenciel on referenciel.id_referenciel = caracteristique_objet.id_referenciel\n" +
+                    "where libelle_caracteristique= ''" + pc.getCaracteristique().getLibelle_caracteristique() + "'\n";
+            if (pc.getCaracteristique().getNum() == true) {
+                request += "and valeur = " + pc.getCaracteristique().getNum() + "\n";
+            } else if (pc.getCaracteristique().getTexte() == true) {
+                request += "and caracteristique_objet.texte like '% " + pc.getCaracteristique().getTexte() + "%'\n";
+            } else { //C'est un referentiel
+                request += "and libelle_referenciel = '" + pc.getReferentiel().getLibelle_referenciel() + "'\n";
+            }
+        }
+        for (int j = 0; j < i; j++) {
+            request += ")";
+        }
+        request += "order by id_objet";
+        System.out.println("requete sql : \n" + request + "\n");
+        try (PreparedStatement cStmt = connexion.prepareStatement(request)) {
+            cStmt.execute();
+            rs = cStmt.getResultSet();
+            while (rs.next()) {
+                Produit newProduit = new Produit();
+                newProduit.setId_produit(rs.getInt(1));
+                newProduit.setDescription(rs.getString(2));
+                newProduit.setType(produitSearch.getType());
+                newProduit.setListproduitCaracteristiques(new ArrayList<ProduitCaracteristique>());
+                ProduitCaracteristique prix = new ProduitCaracteristique();
+                prix.setId_produit(rs.getInt(1));
+                Caracteristique prixC = new Caracteristique();
+                prixC.setId_caracteristique(rs.getInt(4));
+                prixC.setLibelle_caracteristique(rs.getString(5));
+                prixC.setNum(true);
+                prixC.setTexte(false);
+                prixC.setListe(false);
+                prix.setCaracteristique(prixC);
+                prix.setValeur(rs.getDouble(6));
+                newProduit.getListproduitCaracteristiques().add(prix);
+                listeProduits.add(newProduit);
+            }
+            rs.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        System.out.println("resultat : \n" + listeProduits);
+        return listeProduits;
     }
 
     @Override
