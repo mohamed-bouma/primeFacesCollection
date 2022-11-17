@@ -7,11 +7,11 @@
       xmlns:f="http://xmlns.jcp.org/jsf/core">
 <f:view>
     <h:head>
-
+        <h:outputStylesheet library="css" name="style.css"/>
     </h:head>
     <h:body>
-        <div id="contenu">
-            <ui:insert name="contenu">
+        <div id="layout">
+            <ui:insert name="layout">
                 <ui:include src="templates/layout.xhtml"></ui:include>
             </ui:insert>
         </div>
