@@ -19,7 +19,7 @@ public class CollectionConnect {
             try {
                 SQLServerDataSource ds = new SQLServerDataSource();
                 ds.setServerName("127.0.0.1");
-//                ds.setServerName("sdbm");
+                // ds.setServerName("db");
                 ds.setPortNumber(1402);
                 ds.setDatabaseName("COLLECTION");
                 ds.setIntegratedSecurity(false);

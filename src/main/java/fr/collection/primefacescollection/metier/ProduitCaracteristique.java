@@ -6,7 +6,6 @@ public class ProduitCaracteristique {
 
     private Caracteristique caracteristique;
 
-    private String truc = "valeur";
     private Referenciel referentiel;
 
     private String texte;

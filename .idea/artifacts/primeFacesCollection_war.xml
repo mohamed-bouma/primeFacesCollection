@@ -7,7 +7,7 @@
         <packaging>war</packaging>
       </options>
     </properties>
-    <root id="archive" name="primeFacesCollection-1.0-SNAPSHOT.war">
+    <root id="archive" name="COLLECTION.war">
       <element id="artifact" artifact-name="primeFacesCollection:war exploded" />
     </root>
   </artifact>

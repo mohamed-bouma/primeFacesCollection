@@ -146,4 +146,51 @@ public class TypeDAO extends DAO<Type, Type> {
         }
     }
 
+
+    public static List<Caracteristique> getCaracteristiquesTypes(Type type) {
+        String procedureStockee;
+        ResultSet rs;
+
+        List<Caracteristique> typecaracList = new ArrayList<>();
+
+
+        procedureStockee = "{call dbo.ps_get_type_id (?)}";
+        try (CallableStatement cStmt = connexion.prepareCall(procedureStockee)) {
+
+            cStmt.setString(1, type.getLibelle());
+
+            cStmt.execute();
+            rs = cStmt.getResultSet();
+
+            while (rs.next()) {
+                type.setId(rs.getInt(1));
+            }
+            rs.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+        procedureStockee = "{call dbo.get_caracteristiques_type (?)}";
+        try (CallableStatement cStmt = connexion.prepareCall(procedureStockee)) {
+
+            cStmt.setString(1, type.getLibelle());
+
+            cStmt.execute();
+            rs = cStmt.getResultSet();
+
+            while (rs.next()) {
+                Caracteristique caracteristique = new Caracteristique();
+                caracteristique.setLibelle_caracteristique(rs.getString(1));
+                typecaracList.add(caracteristique);
+
+            }
+            rs.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        System.out.println(typecaracList);
+        return typecaracList;
+    }
+
 }

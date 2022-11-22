@@ -1,6 +1,7 @@
 package fr.collection.primefacescollection.bean;
 
 import fr.collection.primefacescollection.dao.DAOfactory;
+import fr.collection.primefacescollection.metier.Caracteristique;
 import fr.collection.primefacescollection.metier.Produit;
 import fr.collection.primefacescollection.metier.Type;
 import fr.collection.primefacescollection.service.ProduitSearch;
@@ -23,17 +24,21 @@ public class ProduitBean implements Serializable {
     private List<Type> allTypes;
     private Type typeSelected;
 
+    private List<Caracteristique> allcaracteristiques;
 
-    private ProduitSearch articleSearch;
+
+    private ProduitSearch produitSearch;
 
 
     public ProduitBean() {
-        articleSearch = new ProduitSearch();
+        produitSearch = new ProduitSearch();
     }
 
     @PostConstruct
     public void init(){
-        produitsFiltred = DAOfactory.getProduitDAO().getLike(articleSearch);
+
+        produitsFiltred = DAOfactory.getProduitDAO().getLike(produitSearch);
+       // produitsFiltred = DAOfactory.getProduitDAO().getTableProduit();
 
         allTypes = DAOfactory.getTypeDAO().getAll();
         allTypes.add(0,new Type(0,"Choisir Type"));
@@ -42,14 +47,25 @@ public class ProduitBean implements Serializable {
     }
 
 
+    public void filtrer(){
+
+        produitSearch = new ProduitSearch();
+        produitSearch.setType(typeSelected);
+
+        produitsFiltred = DAOfactory.getProduitDAO().getLike(produitSearch);
+
+
+    }
+
+
 
 
     public ProduitSearch getArticleSearch() {
-        return articleSearch;
+        return produitSearch;
     }
 
     public void setArticleSearch(ProduitSearch articleSearch) {
-        this.articleSearch = articleSearch;
+        this.produitSearch = produitSearch;
     }
 
     public List<Produit> getProduitsFiltred() {

@@ -18,6 +18,8 @@
 
             <p:commandButton value="Soumettre" action="#{produitBean.filtrer}" update="articles"/>
 
+
+
             <div class="card">
                 <p:dataTable id="articles" widgetVar="allarticles" var="produit" value="#{produitBean.produitsFiltred}"
                              rows="10"
